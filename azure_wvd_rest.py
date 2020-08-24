@@ -19,11 +19,9 @@ class Authenticator_MSAL_API_Requests:
         self.headers = None
         result = None
 
-        msal_app = msal.ConfidentialClientApplication(
-            self.client_id, client_credential=self.client_secret, authority=self._authority)
+        msal_app = msal.ConfidentialClientApplication(self.client_id, client_credential=self.client_secret, authority=self._authority)
 
-        result = msal_app.acquire_token_silent(
-            scopes=self.scope_list, account=None)
+        result = msal_app.acquire_token_silent(scopes=self.scope_list, account=None)
 
         if not result:
             print("No suitable token exists in cache. Getting a new one from AAD.")
@@ -71,13 +69,11 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                     if hostpool_type == "All":
                         rg_list.append(resource_group)
                         url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hp['name']}/sessionhosts"
-                        r = requests.get(
-                            url, headers=self.headers, params=params)
+                        r = requests.get(url, headers=self.headers, params=params)
                         data = json.loads(json.dumps(r.json()))
                         for sh in data['value']:
                             try:
-                                sessionHosts_List.append(
-                                    sh['name'].split("/")[1].split("."[0])[0])
+                                sessionHosts_List.append(sh['name'].split("/")[1].split("."[0])[0])
                             except:
                                 continue
                         sessionHosts_Dict[hp['name']] = sessionHosts_List
@@ -85,13 +81,11 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                     elif hostpool_type == hp['properties']['hostPoolType']:
                         rg_list.append(resource_group)
                         url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hp['name']}/sessionhosts"
-                        r = requests.get(
-                            url, headers=self.headers, params=params)
+                        r = requests.get(url, headers=self.headers, params=params)
                         data = json.loads(json.dumps(r.json()))
                         for sh in data['value']:
                             try:
-                                sessionHosts_List.append(
-                                    sh['name'].split("/")[1].split("."[0])[0])
+                                sessionHosts_List.append(sh['name'].split("/")[1].split("."[0])[0])
                             except:
                                 continue
                         sessionHosts_Dict[hp['name']] = sessionHosts_List
@@ -106,6 +100,7 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
 
     def get_active_sessions(self, hostpool, sessionhost, resource_group) -> int:
         """ Get active user sessions on sessionhost. Disconnected sessions will still be visible, only signed out sessions will be seen as inactive. """
+
         current_activeSessions = None
         try:
             url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hostpool}/sessionhosts"
@@ -119,8 +114,7 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                     return current_activeSessions
         except:
             e = sys.exc_info()
-            print(
-                f"Error getting active Sessions on machine {sessionhost}. {str(e)}")
+            print(f"Error getting active Sessions on machine {sessionhost}. {str(e)}")
 
     def check_allow_new_sessionstatus(self, hostpool, sessionhost, resource_group) -> bool:
         """ Checks wether a sessionhost is configured to allow new sessions or not. Returns bool true/false. """
@@ -162,18 +156,14 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                     for sessionhost in data["value"]:
                         sessionhostName = sessionhost["name"].split("/")[1]
                         url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hostpool}/sessionhosts/{sessionhostName}/usersessions"
-                        r = requests.get(
-                            url, headers=self.headers, params=params)
+                        r = requests.get(url, headers=self.headers, params=params)
                         data2 = json.loads(json.dumps(r.json()))
 
                         for activeUserSession in data2["value"]:
                             if activeUserSession["properties"]["applicationType"] == "Desktop":
-                                server = activeUserSession["name"].split(
-                                    "/")[1]
-                                sessionID = activeUserSession["name"].split(
-                                    "/")[2]
-                                user = activeUserSession["properties"]["activeDirectoryUserName"].split("\\")[
-                                    1]
+                                server = activeUserSession["name"].split("/")[1]
+                                sessionID = activeUserSession["name"].split("/")[2]
+                                user = activeUserSession["properties"]["activeDirectoryUserName"].split("\\")[1]
                                 server_List.append(server)
                                 sessionID_List.append(sessionID)
                                 user_List.append(user)
