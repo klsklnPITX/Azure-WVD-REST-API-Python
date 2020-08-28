@@ -140,7 +140,7 @@ class AzureWVDRequests(AuthenticatorMSALAPIRequests):
 
     def get_wvd_usersessions(self, hostpool_dict, rg_list) -> Tuple[list, list, list]:
         """Use return values of get_hostpool_vms_rgs as parameters. Returns sessionhost, session ID and user in sequence in lists."""
-        server__list = []
+        server_list = []
         session_id_list = []
         user_list = []
 
@@ -165,15 +165,15 @@ class AzureWVDRequests(AuthenticatorMSALAPIRequests):
                                 server = active_user_session["name"].split("/")[1]
                                 session_id = active_user_session["name"].split("/")[2]
                                 user = active_user_session["properties"]["activeDirectoryUserName"].split("\\")[1]
-                                server__list.append(server)
+                                server_list.append(server)
                                 session_id_list.append(session_id)
                                 user_list.append(user)
                 except:
                     continue
 
-            return server__list, session_id_list, user_list
+            return server_list, session_id_list, user_list
 
         except:
             e = sys.exc_info()
             print(f"Error getting user sessions for WVD: {str(e)}")
-            return server__list, session_id_list, user_list
+            return server_list, session_id_list, user_list
