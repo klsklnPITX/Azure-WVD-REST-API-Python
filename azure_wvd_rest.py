@@ -5,8 +5,8 @@ from typing import Tuple
 import sys
 
 
-class Authenticator_MSAL_API_Requests:
-    """ Authenticate to call REST API """
+class AuthenticatorMSALAPIRequests:
+    """Authenticate to call REST API"""
 
     def __init__(self, client_id, client_secret, tenant_id, scope_list=None):
         self.client_id = client_id
@@ -37,19 +37,19 @@ class Authenticator_MSAL_API_Requests:
             print(result.get("correlation_id"))
 
 
-class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
-    """ Call REST API - WVD """
+class AzureWVDRequests(AuthenticatorMSALAPIRequests):
+    """Call REST API - WVD"""
 
     def __init__(self, client_id, client_secret, tenant_id, subscription_id, scope_list=None):
         super().__init__(client_id, client_secret, tenant_id, scope_list)
         self.subscription_id = subscription_id
 
     def get_hostpool_vms_rgs(self, hostpool_type="All") -> Tuple[dict, list]:
-        """ Get all/pooled/personal hostpools with sessionhost VM and according resource group. Default parameter = "All".
-            Returns a dictionary with hostpool as key and its sessionhost VM as value in list. List has the according resource group. """
+        """Get all/pooled/personal hostpools with sessionhost VM and according resource group. Default parameter = "All".
+            Returns a dictionary with hostpool as key and its sessionhost VM as value in list. List has the according resource group."""
 
-        sessionHosts_List = []
-        sessionHosts_Dict = {}
+        sessionhosts_list = []
+        sessionhost_dict = {}
         rg_list = []
 
         params = {'api-version': '2020-06-01'}
@@ -73,10 +73,10 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                         data = json.loads(json.dumps(r.json()))
                         for sh in data['value']:
                             try:
-                                sessionHosts_List.append(sh['name'].split("/")[1].split("."[0])[0])
+                                sessionhosts_list.append(sh['name'].split("/")[1].split("."[0])[0])
                             except:
                                 continue
-                        sessionHosts_Dict[hp['name']] = sessionHosts_List
+                        sessionhost_dict[hp['name']] = sessionhosts_list
 
                     elif hostpool_type == hp['properties']['hostPoolType']:
                         rg_list.append(resource_group)
@@ -85,39 +85,40 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                         data = json.loads(json.dumps(r.json()))
                         for sh in data['value']:
                             try:
-                                sessionHosts_List.append(sh['name'].split("/")[1].split("."[0])[0])
+                                sessionhosts_list.append(sh['name'].split("/")[1].split("."[0])[0])
                             except:
                                 continue
-                        sessionHosts_Dict[hp['name']] = sessionHosts_List
+                        sessionhost_dict[hp['name']] = sessionhosts_list
 
-                    sessionHosts_List = []
+                    sessionhosts_list = []
             except:
                 e = sys.exc_info()
                 print(e)
                 continue
 
-        return sessionHosts_Dict, rg_list
+        return sessionhost_dict, rg_list
 
     def get_active_sessions(self, hostpool, sessionhost, resource_group) -> int:
-        """ Get active user sessions on sessionhost. Disconnected sessions will still be visible, only signed out sessions will be seen as inactive. """
+        """Get active user sessions on sessionhost. Disconnected sessions will still be visible, only signed out sessions will be seen as inactive."""
 
-        current_activeSessions = None
+        current_active_sessions = None
         try:
             url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hostpool}/sessionhosts"
             params = {'api-version': '2019-01-23-preview'}
             r = requests.get(url, headers=self.headers, params=params)
-            dataSH = json.loads(json.dumps(r.json()))
+            data_sh = json.loads(json.dumps(r.json()))
 
-            for vm in dataSH['value']:
+            for vm in data_sh['value']:
                 if vm['name'].split("/")[1].split("."[0])[0] == sessionhost:
-                    current_activeSessions = vm['properties']['sessions']
-                    return current_activeSessions
+                    current_active_sessions = vm['properties']['sessions']
+                    return current_active_sessions
         except:
             e = sys.exc_info()
-            print(f"Error getting active Sessions on machine {sessionhost}. {str(e)}")
+            print(
+                f"Error getting active Sessions on machine {sessionhost}. {str(e)}")
 
     def check_allow_new_sessionstatus(self, hostpool, sessionhost, resource_group) -> bool:
-        """ Checks wether a sessionhost is configured to allow new sessions or not. Returns bool true/false. """
+        """Checks wether a sessionhost is configured to allow new sessions or not. Returns bool true/false."""
         try:
             url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hostpool}/sessionhosts"
             params = {'api-version': '2019-01-23-preview'}
@@ -137,16 +138,16 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
             e = sys.exc_info()
             print(str(e))
 
-    def get_wvd_usersessions(self, hostpoolDict, rg_list) -> Tuple[list, list, list]:
-        """ Use return values of get_hostpool_vms_rgs as parameters. Returns sessionhost, session ID and user in sequence in lists.  """
-        server_List = []
-        sessionID_List = []
-        user_List = []
+    def get_wvd_usersessions(self, hostpool_dict, rg_list) -> Tuple[list, list, list]:
+        """Use return values of get_hostpool_vms_rgs as parameters. Returns sessionhost, session ID and user in sequence in lists."""
+        server__list = []
+        session_id_list = []
+        user_list = []
 
         try:
             params = {'api-version': '2019-01-23-preview'}
 
-            for rg_index, hostpool in enumerate(hostpoolDict):
+            for rg_index, hostpool in enumerate(hostpool_dict):
                 resource_group = rg_list[rg_index]
                 url = f"https://management.azure.com/subscriptions/{self.subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.DesktopVirtualization/hostpools/{hostpool}/sessionhosts"
                 r = requests.get(url, headers=self.headers, params=params)
@@ -159,20 +160,20 @@ class Azure_WVD_Requests(Authenticator_MSAL_API_Requests):
                         r = requests.get(url, headers=self.headers, params=params)
                         data2 = json.loads(json.dumps(r.json()))
 
-                        for activeUserSession in data2["value"]:
-                            if activeUserSession["properties"]["applicationType"] == "Desktop":
-                                server = activeUserSession["name"].split("/")[1]
-                                sessionID = activeUserSession["name"].split("/")[2]
-                                user = activeUserSession["properties"]["activeDirectoryUserName"].split("\\")[1]
-                                server_List.append(server)
-                                sessionID_List.append(sessionID)
-                                user_List.append(user)
+                        for active_user_session in data2["value"]:
+                            if active_user_session["properties"]["applicationType"] == "Desktop":
+                                server = active_user_session["name"].split("/")[1]
+                                session_id = active_user_session["name"].split("/")[2]
+                                user = active_user_session["properties"]["activeDirectoryUserName"].split("\\")[1]
+                                server__list.append(server)
+                                session_id_list.append(session_id)
+                                user_list.append(user)
                 except:
                     continue
 
-            return server_List, sessionID_List, user_List
+            return server__list, session_id_list, user_list
 
         except:
             e = sys.exc_info()
             print(f"Error getting user sessions for WVD: {str(e)}")
-            return server_List, sessionID_List, user_List
+            return server__list, session_id_list, user_list
